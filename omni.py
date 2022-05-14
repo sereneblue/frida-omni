@@ -1,8 +1,24 @@
-from bottle import Bottle, get, post, run
+from bottle import Bottle, get, post, run, response
+import bottle
 import base64
 import frida
 import operator
 import struct
+
+class EnableCors(object):
+    name = 'enable_cors'
+    api = 2
+
+    def apply(self, fn, context):
+        def _enable_cors(*args, **kwargs):
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+
+            if bottle.request.method != 'OPTIONS':
+                return fn(*args, **kwargs)
+
+        return _enable_cors
 
 app = Bottle()
 
@@ -68,4 +84,5 @@ def get_icon(app_params):
 
     return None
 
+app.install(EnableCors())
 run(app, host='localhost', port=8080, debug=True)
