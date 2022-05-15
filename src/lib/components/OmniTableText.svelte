@@ -1,0 +1,31 @@
+<script lang="ts">
+	export let content: string = "";
+	export let canCopy: boolean = false;
+	export let fullwidth: boolean = false;
+
+	let contentEl: Element = null;
+	let copyText = 'Copy to clipboard';
+
+	const copyContentToClipboard = (): void => {
+		copyText = 'Copied!';
+		
+		navigator.clipboard.writeText(content);
+
+		setTimeout(() => {
+			copyText = 'Copy to clipboard';
+		}, 1000)
+	} 
+</script>
+
+<div class={ fullwidth ? '' : 'max-w-lg break-all'}>
+	<span bind:this={contentEl}>{content}</span>
+
+	{#if canCopy && content != ''}
+		<div class="my-2">
+			<button on:click={copyContentToClipboard} class="flex items-center gap-x-1 bg-transparent border border-gray-600 text-xs text-white rounded px-2 p-1">
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+				{copyText}
+			</button>
+		</div>
+	{/if}
+</div>
