@@ -97,6 +97,15 @@ def get_logs():
                         'name': row['name'],
                         'value': row['value']
                         })
+        elif log == 'sqlite':
+            cur.execute("select * from log_sqlite order by id desc limit 100")
+            for row in cur:
+                log_data.append({
+                    'id': row['id'],
+                    'method': row['method'],
+                    'db': row['db'],
+                    'value': row['value']
+                })
         else:
             pass
 
@@ -129,6 +138,15 @@ def create_db():
 
         create index log_pkg_info_idx on log_pkg_info (type);
 
+        create table log_sqlite (
+            id INTEGER PRIMARY KEY,
+            method TEXT NOT NULL,
+            db TEXT NOT NULL,
+            value TEXT NOT NULL
+        );
+
+        create index log_sqlite_idex on log_sqlite (method);
+
         create table log_hash (
             id INTEGER PRIMARY KEY,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -150,11 +168,14 @@ def get_icon(app_params):
     return None
 
 def on_message(message, data):
+    log_func = {
+        'hash': omni_log.log_hash,
+        'pkg_info': omni_log.log_pkg_info,
+        'sqlite': omni_log.log_sqlite
+    }
+
     if message['type'] == 'send':
-        if message['payload']['log'] == 'hash':
-            omni_log.log_hash(cur, message['payload'])
-        if message['payload']['log'] == 'pkg_info':
-            omni_log.log_pkg_info(cur, message['payload'])
+        log_func[message['payload']['log']](cur, message['payload'])
     else:
         print(message)
 
