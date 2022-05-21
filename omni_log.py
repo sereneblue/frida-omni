@@ -1,7 +1,22 @@
+def log_crypto(cur, payload):
+	cur.execute("""
+		insert into log_crypto(method, params) values (?, ?);
+	""", (payload['method'], payload['params']))
+
+def log_fs(cur, payload):
+	cur.execute("""
+		insert into log_fs(path) values (?);
+	""", (payload['path'],))
+
 def log_hash(cur, payload):
 	cur.execute("""
 		insert into log_hash(algo, input, output) values (?, ?, ?);
 	""", (payload['algo'], payload['input'], payload['output']))
+
+def log_http(cur, payload):
+	cur.execute("""
+		insert into log_http(url) values (?);
+	""", (payload['url'],))
 
 def log_pkg_info(cur, payload):
 	rows = []

@@ -71,9 +71,25 @@ def get_logs():
     for log in request.json['logs']:
         log_data = []
 
-        if log == 'hash':
+        if log == 'crypto':
+            cur.execute("select * from log_crypto order by id desc limit 100;")
+            for row in cur:
+                log_data.append({
+                    'id': row['id'],
+                    'timestamp': row['timestamp'],
+                    'method': row['method'],
+                    'params': row['params']
+                })
+        elif log == 'fs':
+            cur.execute("select * from log_fs order by id desc limit 100;")
+            for row in cur:
+                log_data.append({
+                    'id': row['id'],
+                    'timestamp': row['timestamp'],
+                    'path': row['path']
+                })
+        elif log == 'hash':
             cur.execute("select * from log_hash order by id desc limit 100;")
-            
             for row in cur:
                 log_data.append({
                     'id': row['id'],
@@ -81,6 +97,14 @@ def get_logs():
                     'timestamp': row['timestamp'],
                     'input': row['input'],
                     'output': row['output']
+                })
+        elif log == 'http':
+            cur.execute("select * from log_http order by id desc limit 100;")
+            for row in cur:
+                log_data.append({
+                    'id': row['id'],
+                    'timestamp': row['timestamp'],
+                    'url': row['url']
                 })
         elif log == 'pkg_info':
             log_data = {}
@@ -130,6 +154,27 @@ def enable_cors():
 
 def create_db():
     cur.executescript("""
+        create table log_crypto (
+            id INTEGER PRIMARY KEY,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            method TEXT NOT NULL,
+            params TEXT NOT NULL
+        );
+
+        create index log_crypto_idx on log_crypto (method);
+
+        create table log_fs (
+            id INTEGER PRIMARY KEY,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            path TEXT NOT NULL
+        );
+
+        create table log_http (
+            id INTEGER PRIMARY KEY,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            url TEXT NOT NULL
+        );
+
         create table log_pkg_info (
             type TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -140,6 +185,7 @@ def create_db():
 
         create table log_sqlite (
             id INTEGER PRIMARY KEY,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
             method TEXT NOT NULL,
             db TEXT NOT NULL,
             value TEXT NOT NULL
@@ -169,7 +215,10 @@ def get_icon(app_params):
 
 def on_message(message, data):
     log_func = {
+        'crypto': omni_log.log_crypto,
+        'fs': omni_log.log_fs,
         'hash': omni_log.log_hash,
+        'http': omni_log.log_http,
         'pkg_info': omni_log.log_pkg_info,
         'sqlite': omni_log.log_sqlite
     }

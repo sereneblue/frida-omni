@@ -8,7 +8,10 @@ class Omni {
 	constructor() {
 		this.logs = {
 			pkg_info: true,
+			crypto: true,
+			fs: true,
 			hash: true,
+			http: true,
 			sqlite: true
 		}
 	}
