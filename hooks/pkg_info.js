@@ -64,11 +64,13 @@ Java.perform(function() {
     	})
     }
 
-    for (let i = 0; i < sharedLibs.length; i++) {
-    	pkgSharedLibs.push({
-    		name: sharedLibs[i],
-            value: ''
-    	})
+    if (sharedLibs) {
+        for (let i = 0; i < sharedLibs.length; i++) {
+        	pkgSharedLibs.push({
+        		name: sharedLibs[i],
+                value: ''
+        	})
+        }
     }
 
 	send({

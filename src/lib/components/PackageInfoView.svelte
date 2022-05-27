@@ -52,13 +52,15 @@
 				});
 			}
 
-			for (let i = 0; i < d.sharedLibs.length; i++) {
-				tmp.push({
-					id: `sl-${i}`,
-					type: 'Shared Lib',
-					name: d.sharedLibs[i].name,
-					value: ""
-				});
+			if (d.sharedLibs) {
+				for (let i = 0; i < d.sharedLibs.length; i++) {
+					tmp.push({
+						id: `sl-${i}`,
+						type: 'Shared Lib',
+						name: d.sharedLibs[i].name,
+						value: ""
+					});
+				}
 			}
 		}
 
