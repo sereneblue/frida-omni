@@ -3,10 +3,10 @@
 
 	export let data = [];
 
-	const headers = ["DB", "Method", "Value"];
+	const headers = ["Timestamp", "Method", "Value"];
 	const render = [
 		{
-			fn: (data) => data.db,
+			fn: (data) => data.timestamp,
 			clipboard: false,
 		},
 		{
@@ -16,6 +16,7 @@
 		{
 			fn: (data) => data.value,
 			clipboard: true,
+			fullwidth: true
 		}
 	]
 </script>

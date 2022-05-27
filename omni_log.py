@@ -34,6 +34,11 @@ def log_pkg_info(cur, payload):
 		insert into log_pkg_info(type, name, value) values (?, ?, ?);
 	""", rows)
 
+def log_shared_prefs(cur, payload):
+	cur.execute("""
+		insert into log_shared_prefs(method, value) values (?, ?);
+	""", (payload['method'], payload['value']))
+
 def log_sqlite(cur, payload):
 	cur.execute("""
 		insert into log_sqlite(method, db, value) values (?, ?, ?);

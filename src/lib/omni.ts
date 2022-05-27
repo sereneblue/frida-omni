@@ -12,6 +12,7 @@ class Omni {
 			fs: true,
 			hash: true,
 			http: true,
+			shared_prefs: true,
 			sqlite: true
 		}
 	}

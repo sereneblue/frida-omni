@@ -121,6 +121,15 @@ def get_logs():
                         'name': row['name'],
                         'value': row['value']
                         })
+        elif log == 'shared_prefs':
+            cur.execute("select * from log_shared_prefs order by id desc limit 100")
+            for row in cur:
+                log_data.append({
+                    'id': row['id'],
+                    'timestamp': row['timestamp'],
+                    'method': row['method'],
+                    'value': row['value']
+                })
         elif log == 'sqlite':
             cur.execute("select * from log_sqlite order by id desc limit 100")
             for row in cur:
@@ -169,6 +178,16 @@ def create_db():
             path TEXT NOT NULL
         );
 
+        create table log_hash (
+            id INTEGER PRIMARY KEY,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            algo TEXT NOT NULL,
+            input TEXT NOT NULL,
+            output TEXT NOT NULL
+        );
+
+        create index log_hash_idx on log_hash (algo);
+
         create table log_http (
             id INTEGER PRIMARY KEY,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -183,6 +202,15 @@ def create_db():
 
         create index log_pkg_info_idx on log_pkg_info (type);
 
+        create table log_shared_prefs (
+            id INTEGER PRIMARY KEY,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            method TEXT NOT NULL,
+            value TEXT NOT NULL
+        );
+
+        create index log_shared_prefs_idx on log_shared_prefs (method);
+
         create table log_sqlite (
             id INTEGER PRIMARY KEY,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -191,17 +219,7 @@ def create_db():
             value TEXT NOT NULL
         );
 
-        create index log_sqlite_idex on log_sqlite (method);
-
-        create table log_hash (
-            id INTEGER PRIMARY KEY,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-            algo TEXT NOT NULL,
-            input TEXT NOT NULL,
-            output TEXT NOT NULL
-        );
-
-        create index log_hash_idx on log_hash (algo);
+        create index log_sqlite_idx on log_sqlite (method);
     """)
 
 def get_icon(app_params):
@@ -220,6 +238,7 @@ def on_message(message, data):
         'hash': omni_log.log_hash,
         'http': omni_log.log_http,
         'pkg_info': omni_log.log_pkg_info,
+        'shared_prefs': omni_log.log_shared_prefs,
         'sqlite': omni_log.log_sqlite
     }
 

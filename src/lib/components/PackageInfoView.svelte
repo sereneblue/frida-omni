@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { HashData } from "../types.ts";
 	import OmniTable from "./OmniTable.svelte";
 
 	export let data = {};
