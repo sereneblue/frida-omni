@@ -1,21 +1,10 @@
 Java.perform(function() {
-    function b2s(array) {
-        let result = "";
-        for (let i = 0; i < array.length; i++) {
-            result += String.fromCharCode(modulus(array[i], 256));
-        }
-        return result;
-    }
-
-    function modulus(x, n) {
-        return ((x % n) + n) % n;
-    }
+    const JavaString = Java.use('java.lang.String');
 
     function encodeHex(byteArray) {
         const HexClass = Java.use('org.apache.commons.codec.binary.Hex');
-        const StringClass = Java.use('java.lang.String');
         const hexChars = HexClass.encodeHex(byteArray);
-        return StringClass.$new(hexChars).toString();
+        return JavaString.$new(hexChars).toString();
     }
 
     const MessageDigest = Java.use('java.security.MessageDigest');
@@ -31,7 +20,7 @@ Java.perform(function() {
         send({
             log: 'hash',
             algo,
-            input: b2s(byte_array),
+            input: encodeHex(byte_array),
             output: hashStr
         })
 
