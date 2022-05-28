@@ -1,12 +1,19 @@
 from bottle import Bottle, get, post, request, response, run 
+from time import sleep
 import bottle
 import base64
 import frida
+import glob
 import operator
 import struct
 import sqlite3
 
 import omni_log
+
+CURRENT_DEVICE = ""
+CURRENT_APP = ""
+SESSION = None
+SCRIPTS = {}
 
 app = Bottle()
 db = sqlite3.connect(":memory:", check_same_thread=False)
@@ -43,7 +50,7 @@ def get_applications(device_id=""):
     device = None
 
     try:
-        device = frida.get_device_manager().get_device_matching(lambda d: d.id == device_id)
+        device = frida.get_device_manager().get_device_matching(lambda d: d.id == device_id, timeout = 1)
     except frida.InvalidArgumentError:
         pass
 
@@ -67,6 +74,36 @@ def get_applications(device_id=""):
 def get_logs():
     totals = {}
     logs = {}
+    meta = {}
+
+    device_id = request.json['deviceId']
+    app_id = request.json['appId']
+
+    # check if device and app exist
+    device = None
+
+    try:
+        device = frida.get_device_manager().get_device_matching(lambda d: d.id == device_id)
+    except frida.InvalidArgumentError:
+        pass
+
+    if not device:
+        return dict(data={"logs": logs, "totals": totals, "meta": meta}, success=False, message="device_not_found")
+
+    apps = device.enumerate_applications()
+    application_list = [app for app in apps if app.identifier == app_id]
+
+    if len(application_list) == 0:
+        return dict(data={"logs": logs, "totals": totals, "meta": meta}, success=False, message="app_not_found")
+
+    meta['name'] = application_list[0].name
+
+    # check if requested app log is loaded
+    if not ((CURRENT_APP == "" and CURRENT_DEVICE == "") or (CURRENT_APP == app_id and CURRENT_DEVICE == device_id)):
+        clear_session()
+        reset_db()
+
+    meta['running'] = is_running(device, app_id)
 
     for log in request.json['logs']:
         log_data = []
@@ -139,8 +176,6 @@ def get_logs():
                     'db': row['db'],
                     'value': row['value']
                 })
-        else:
-            pass
 
         logs[log] = log_data
 
@@ -149,11 +184,42 @@ def get_logs():
         else:
             totals[log] = 0
 
-    return dict(data={"logs": logs, "totals": totals}, success=True, message="")
+    return dict(data={"logs": logs, "totals": totals, "meta": meta}, success=True, message="")
 
-@app.post('/api/action/<device_id>')
-def app_action(device_id=""):
-    return ""
+@app.post('/api/action')
+def app_action():
+    global CURRENT_DEVICE, CURRENT_APP, SESSION
+
+    device_id = request.forms.get("deviceId")
+    app_id = request.forms.get("appId")
+    action = request.forms.get("action")
+
+    device = None
+
+    try:
+        device = frida.get_device_manager().get_device_matching(lambda d: d.id == device_id, timeout = 1)
+    except frida.InvalidArgumentError:
+        pass
+
+    if not device:
+        return dict(data=None, success=False, message="Unable to find device")
+
+    if action == 'start':
+        clear_session()
+
+        pid = device.spawn(app_id)
+        SESSION = device.attach(pid)
+        create_scripts()
+        device.resume(pid)
+        load_scripts()
+
+        CURRENT_DEVICE = device_id
+        CURRENT_APP = app_id
+    elif action == 'stop':
+        clear_session()
+        stop_app(device, app_id)
+
+        return dict(data=None, success=True, message="")
 
 @app.hook('after_request')
 def enable_cors():
@@ -231,6 +297,62 @@ def get_icon(app_params):
 
     return None
 
+def reset_db():
+    global db, cur
+
+    db.close()
+
+    db = sqlite3.connect(":memory:", check_same_thread=False)
+    db.row_factory = sqlite3.Row
+    cur = db.cursor()
+
+    create_db()
+
+def clear_session():
+    global SESSION
+
+    if SESSION:
+        SESSION.detach()
+
+    SESSION = None
+
+def create_scripts():
+    global SCRIPTS, SESSION
+
+    for script in glob.glob('hooks/*.js'):
+        script_name = script.replace('.js', '').replace('hooks/', '')
+
+        with open(script, 'r') as script_file: 
+            SCRIPTS[script_name] = SESSION.create_script(script_file.read())
+            SCRIPTS[script_name].on('message', on_message)
+            sleep(.5)
+
+def stop_app(device, app_id):
+    apps = device.enumerate_applications()
+    apps = [app for app in apps if app.identifier == app_id]
+
+    if len(apps) > 0:
+        for p in device.enumerate_processes():
+            if p.name == apps[0].name:
+                device.kill(p.pid)
+
+def is_running(device, app_id):
+    apps = device.enumerate_applications()
+    apps = [app for app in apps if app.identifier == app_id]
+
+    if len(apps) > 0:
+        for p in device.enumerate_processes():
+            if p.name == apps[0].name:
+                return True
+
+    return False
+
+def load_scripts():
+    global SCRIPTS
+
+    for script in SCRIPTS:
+        SCRIPTS[script].load()
+
 def on_message(message, data):
     log_func = {
         'crypto': omni_log.log_crypto,
@@ -248,4 +370,4 @@ def on_message(message, data):
         print(message)
 
 create_db()
-run(app, host='localhost', port=8080, debug=True)
+run(app, host='localhost', port=8080, debug=False)

@@ -31,8 +31,8 @@ class Omni {
 		return data;
 	}
 
-	async getLogData(): Promise<ResponseData> {
-		let enabledLogs = { logs : Object.keys(this.logs).filter(k => this.logs[k]) }
+	async getLogData(deviceId: string, appId: string): Promise<ResponseData> {
+		let enabledLogs = { logs : Object.keys(this.logs).filter(k => this.logs[k]), deviceId, appId }
 
 		let res = await fetch(this.base_url + '/api/logs', {
 		    method: 'POST',
@@ -41,6 +41,25 @@ class Omni {
 		      'Content-Type': 'application/json'
 		    },
 		    body: JSON.stringify(enabledLogs)
+		  });
+
+		let data = await res.json();
+
+		return data;
+	}
+
+	async postAction(deviceId: string, appId: string, action: string): Promise<ResponseData> {
+		const formData = new URLSearchParams();
+		formData.append('deviceId', deviceId);
+		formData.append('appId', appId);
+		formData.append('action', action);
+
+		let res = await fetch(this.base_url + '/api/action', {
+		    method: 'POST',
+		    headers: {
+		      'Content-Type': 'application/x-www-form-urlencoded',
+		    },
+		    body: formData
 		  });
 
 		let data = await res.json();
