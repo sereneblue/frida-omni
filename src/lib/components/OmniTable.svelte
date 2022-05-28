@@ -7,7 +7,7 @@
 </script>
 
 <table class="w-full text-left text-gray-400">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-700 text-gray-400">
+    <thead class="text-xs uppercase bg-gray-700 text-gray-400">
     	<tr>
 	    	{#each headers as header}
                 <th scope="col" class="px-4 py-2">
