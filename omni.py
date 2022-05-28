@@ -7,6 +7,7 @@ import glob
 import operator
 import struct
 import sqlite3
+import tempfile
 
 import omni_log
 
@@ -250,6 +251,7 @@ def app_action():
     action = request.forms.get("action")
 
     device = None
+    data = None
 
     try:
         device = frida.get_device_manager().get_device_matching(lambda d: d.id == device_id, timeout = 1)
@@ -273,8 +275,14 @@ def app_action():
     elif action == 'stop':
         clear_session()
         stop_app(device, app_id)
+    elif action == 'download':
+        with tempfile.NamedTemporaryFile() as tmp_db:
+            tmp_db_con = sqlite3.connect(tmp_db.name)
+            db.commit()
+            db.backup(tmp_db_con)
+            data = base64.b64encode(tmp_db.read()).decode('utf-8')
 
-        return dict(data=None, success=True, message="")
+    return dict(data=data, success=True, message="")
 
 @app.get('/<path:path>')
 def home(path):

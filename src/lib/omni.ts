@@ -66,6 +66,16 @@ class Omni {
 
 		return data;
 	}
+
+	saveFile(content: string) {
+	    const downloadLink = document.createElement('a');
+	    document.body.appendChild(downloadLink);
+
+	    downloadLink.href = `data:application/x-sqlite3;base64,${content}`;
+	    downloadLink.target = '_self';
+	    downloadLink.download = `omni_log_${new Date().getTime()}.db`;
+	    downloadLink.click(); 
+	}
 }
 
 export default Omni;
