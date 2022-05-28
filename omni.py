@@ -228,8 +228,8 @@ def get_logs():
             for row in cur:
                 log_data.append({
                     'id': row['id'],
+                    'timestamp': row['timestamp'],
                     'method': row['method'],
-                    'db': row['db'],
                     'value': row['value']
                 })
 
@@ -304,7 +304,7 @@ def create_db():
     cur.executescript("""
         create table log_crypto (
             id INTEGER PRIMARY KEY,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            timestamp DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
             method TEXT NOT NULL,
             params TEXT NOT NULL
         );
@@ -313,13 +313,13 @@ def create_db():
 
         create table log_fs (
             id INTEGER PRIMARY KEY,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            timestamp DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
             path TEXT NOT NULL
         );
 
         create table log_hash (
             id INTEGER PRIMARY KEY,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            timestamp DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
             algo TEXT NOT NULL,
             input TEXT NOT NULL,
             output TEXT NOT NULL
@@ -329,7 +329,7 @@ def create_db():
 
         create table log_http (
             id INTEGER PRIMARY KEY,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            timestamp DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
             url TEXT NOT NULL
         );
 
@@ -343,7 +343,7 @@ def create_db():
 
         create table log_shared_prefs (
             id INTEGER PRIMARY KEY,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            timestamp DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
             method TEXT NOT NULL,
             value TEXT NOT NULL
         );
@@ -352,7 +352,7 @@ def create_db():
 
         create table log_sqlite (
             id INTEGER PRIMARY KEY,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            timestamp DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
             method TEXT NOT NULL,
             db TEXT NOT NULL,
             value TEXT NOT NULL
