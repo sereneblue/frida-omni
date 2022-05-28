@@ -1,4 +1,4 @@
-from bottle import Bottle, get, post, request, response, run 
+from bottle import Bottle, get, post, request, response, run, static_file
 from time import sleep
 import bottle
 import base64
@@ -19,10 +19,6 @@ app = Bottle()
 db = sqlite3.connect(":memory:", check_same_thread=False)
 db.row_factory = sqlite3.Row
 cur = db.cursor()
-
-@app.get('/')
-def home():
-    return ""
 
 @app.route('/', method = 'OPTIONS')
 @app.route('/<path:path>', method = 'OPTIONS')
@@ -220,6 +216,16 @@ def app_action():
         stop_app(device, app_id)
 
         return dict(data=None, success=True, message="")
+
+@app.get('/<path:path>')
+def home(path):
+    return static_file(path, root='./build')
+
+@app.get('/')
+@app.get('/applications')
+@app.get('/dashboard')
+def home():
+    return static_file('index.html', root='build/')
 
 @app.hook('after_request')
 def enable_cors():
