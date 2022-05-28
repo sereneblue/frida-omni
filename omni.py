@@ -105,7 +105,18 @@ def get_logs():
         log_data = []
 
         if log == 'crypto':
-            cur.execute("select * from log_crypto order by id desc limit 100;")
+            search_text = request.json['queryData']['search'].get(log)
+            params = []
+
+            base_query_string = "select * from log_crypto "
+
+            if search_text:
+                base_query_string += " where params like ? "
+                params.append('%' + search_text + '%')
+
+            base_query_string += " order by id desc limit 100;"
+
+            cur.execute(base_query_string, tuple(params))
             for row in cur:
                 log_data.append({
                     'id': row['id'],
@@ -114,7 +125,19 @@ def get_logs():
                     'params': row['params']
                 })
         elif log == 'fs':
-            cur.execute("select * from log_fs order by id desc limit 100;")
+            search_text = request.json['queryData']['search'].get(log)
+            params = []
+
+            base_query_string = "select * from log_fs "
+
+            if search_text:
+                base_query_string += " where path like ? "
+                params.append('%' + search_text + '%')
+
+            base_query_string += " order by id desc limit 100;"
+
+            cur.execute(base_query_string, tuple(params))
+
             for row in cur:
                 log_data.append({
                     'id': row['id'],
@@ -122,7 +145,19 @@ def get_logs():
                     'path': row['path']
                 })
         elif log == 'hash':
-            cur.execute("select * from log_hash order by id desc limit 100;")
+            search_text = request.json['queryData']['search'].get(log)
+            params = []
+
+            base_query_string = "select * from log_hash "
+
+            if search_text:
+                base_query_string += " where input like ? or output like ?"
+                params.append('%' + search_text + '%')
+                params.append('%' + search_text + '%')
+
+            base_query_string += " order by id desc limit 100;"
+
+            cur.execute(base_query_string, tuple(params))
             for row in cur:
                 log_data.append({
                     'id': row['id'],
@@ -132,7 +167,19 @@ def get_logs():
                     'output': row['output']
                 })
         elif log == 'http':
-            cur.execute("select * from log_http order by id desc limit 100;")
+            search_text = request.json['queryData']['search'].get(log)
+            params = []
+
+            base_query_string = "select * from log_http "
+
+            if search_text:
+                base_query_string += " where url like ? "
+                params.append('%' + search_text + '%')
+
+            base_query_string += " order by id desc limit 100;"
+
+            cur.execute(base_query_string, tuple(params))
+
             for row in cur:
                 log_data.append({
                     'id': row['id'],
@@ -164,7 +211,19 @@ def get_logs():
                     'value': row['value']
                 })
         elif log == 'sqlite':
-            cur.execute("select * from log_sqlite order by id desc limit 100")
+            search_text = request.json['queryData']['search'].get(log)
+            params = []
+
+            base_query_string = "select * from log_sqlite "
+
+            if search_text:
+                base_query_string += " where value like ? "
+                params.append('%' + search_text + '%')
+
+            base_query_string += " order by id desc limit 100;"
+
+            cur.execute(base_query_string, tuple(params))
+
             for row in cur:
                 log_data.append({
                     'id': row['id'],
@@ -343,13 +402,15 @@ def stop_app(device, app_id):
                 device.kill(p.pid)
 
 def is_running(device, app_id):
+    global SESSION
+
     apps = device.enumerate_applications()
     apps = [app for app in apps if app.identifier == app_id]
 
     if len(apps) > 0:
         for p in device.enumerate_processes():
             if p.name == apps[0].name:
-                return True
+                return True and SESSION and not SESSION.is_detached
 
     return False
 

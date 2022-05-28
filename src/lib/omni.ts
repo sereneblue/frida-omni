@@ -31,8 +31,8 @@ class Omni {
 		return data;
 	}
 
-	async getLogData(deviceId: string, appId: string): Promise<ResponseData> {
-		let enabledLogs = { logs : Object.keys(this.logs).filter(k => this.logs[k]), deviceId, appId }
+	async getLogData(deviceId: string, appId: string, queryData: object): Promise<ResponseData> {
+		let enabledLogs = { logs : Object.keys(this.logs).filter(k => this.logs[k]), deviceId, appId, queryData }
 
 		let res = await fetch(this.base_url + '/api/logs', {
 		    method: 'POST',

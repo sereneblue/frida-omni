@@ -48,6 +48,7 @@
 	let appRunning = false;
 	let appActionLoaded = false;
 	let timerSeconds: number = 0;
+	let logTimeout: number = 0;
 	let logData = {
 		totals: {
 			crypto: 0,
@@ -67,6 +68,10 @@
 			shared_prefs: []
 		}
 	};
+
+	let queryData = {
+		search: {}
+	}
 
 	$: {
 		appId = $page.url.searchParams.get('app');
@@ -88,9 +93,17 @@
 		}
 	}
 
+	const getLogs = async (e: Event): Promise<void> => {
+		queryData.search[e.detail.type] = e.detail.value;
+
+		timerSeconds = 0;
+		clearTimeout(logTimeout);
+		await updateLogData();
+	}
+
 	const updateLogData = async (): Promise<void> => {
 		if (timerSeconds == 0) {
-			let res = await omni.getLogData(deviceId, appId);
+			let res = await omni.getLogData(deviceId, appId, queryData);
 
 			if (res.success) {
 				logData = res.data;
@@ -106,12 +119,12 @@
 				}
 			}
 
-			timerSeconds = 5;
+			timerSeconds = 10;
 		} else {
 			timerSeconds--;
 		}
 
-		setTimeout(updateLogData, 1000);
+		logTimeout = setTimeout(updateLogData, 1000);
 	}
 
 	onMount(async () => {
@@ -194,17 +207,17 @@
 		{#if selectedTab == Tab.PackageInfo}
 			<PackageInfoView data={logData.logs.pkg_info} />
 		{:else if selectedTab == Tab.Crypto}
-			<CryptoView data={logData.logs.crypto} />
+			<CryptoView data={logData.logs.crypto} query={queryData.search.crypto} on:search={getLogs}  />
 		{:else if selectedTab == Tab.FileSystem}
-			<FSView data={logData.logs.fs} />
+			<FSView data={logData.logs.fs} query={queryData.search.fs} on:search={getLogs} />
 		{:else if selectedTab == Tab.Hash}
-			<HashView data={logData.logs.hash} />
+			<HashView data={logData.logs.hash} query={queryData.search.hash} on:search={getLogs}  />
 		{:else if selectedTab == Tab.HTTP}
-			<HttpView data={logData.logs.http} />
+			<HttpView data={logData.logs.http} query={queryData.search.http} on:search={getLogs} />
 		{:else if selectedTab == Tab.SharedPrefs}
 			<SharedPrefsView data={logData.logs.shared_prefs} />
 		{:else if selectedTab == Tab.SQLite}
-			<SQLiteView data={logData.logs.sqlite} />
+			<SQLiteView data={logData.logs.sqlite} query={queryData.search.sqlite} on:search={getLogs} />
 		{/if}
 	</div>
 
