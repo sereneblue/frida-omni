@@ -95,7 +95,7 @@
 				let res = await omni.postAction(deviceId, appId, action);
 
 				if (action == 'download') {
-					omni.saveFile(res.data);
+					omni.saveFile(res.data, appId);
 				}
 			} catch (e) {} finally {
 				appActionLoaded = false;

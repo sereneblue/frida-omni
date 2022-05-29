@@ -67,13 +67,13 @@ class Omni {
 		return data;
 	}
 
-	saveFile(content: string) {
+	saveFile(content: string, appId: string) {
 	    const downloadLink = document.createElement('a');
 	    document.body.appendChild(downloadLink);
 
 	    downloadLink.href = `data:application/x-sqlite3;base64,${content}`;
 	    downloadLink.target = '_self';
-	    downloadLink.download = `omni_log_${new Date().getTime()}.db`;
+	    downloadLink.download = `omni_${appId}_${new Date().getTime()}.db`;
 	    downloadLink.click(); 
 	}
 }
