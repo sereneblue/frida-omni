@@ -18,7 +18,7 @@
 </script>
 
 <div class={ fullwidth ? '' : 'max-w-lg break-all'}>
-	<span bind:this={contentEl}>{content}</span>
+	<span class="line-clamp-4 hover:line-clamp-none" bind:this={contentEl}>{content}</span>
 
 	{#if canCopy && content != ''}
 		<div class="my-2">
