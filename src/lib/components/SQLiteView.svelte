@@ -6,6 +6,7 @@
 	const dispatch = createEventDispatcher();
 
 	export let data = [];
+	export let filters = [];
 	export let query = "";
 
 	const headers = ["Time", "Method", "Value"];
@@ -27,6 +28,7 @@
 
 <div>
 	<OmniTable {headers} {data} {render} 
+		on:filter={e => dispatch('filter', { type: 'sqlite', id: e.detail.id, checked: e.detail.checked })}
 		on:search={e => dispatch('search', { type: 'sqlite', value: e.detail })}	
-		search={query} hasSearch />
+		{filters} search={query} hasSearch />
 </div>

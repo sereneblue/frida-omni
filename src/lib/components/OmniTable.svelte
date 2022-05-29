@@ -1,8 +1,10 @@
 <script lang="ts">
+	import OmniFilter from "./OmniFilter.svelte";
 	import OmniSearch from "./OmniSearch.svelte";
 	import OmniTableText from "./OmniTableText.svelte";
 
 	export let data = [];
+	export let filters = [];
 	export let headers = [];
 	export let render = [];
 
@@ -11,10 +13,13 @@
 </script>
 
 <div>
-	{#if hasSearch}
+	{#if hasSearch || filters.length}
 		<div class="flex gap-x-1 mb-2">
 			{#if hasSearch}
 				<OmniSearch {search} on:search />
+			{/if}
+			{#if filters.length}
+				<OmniFilter {filters} on:filter />
 			{/if}
 		</div>
 	{/if}

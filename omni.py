@@ -19,7 +19,6 @@ SCRIPTS = {}
 app = Bottle()
 db = sqlite3.connect(":memory:", check_same_thread=False)
 db.row_factory = sqlite3.Row
-cur = db.cursor()
 
 @app.route('/', method = 'OPTIONS')
 @app.route('/<path:path>', method = 'OPTIONS')
@@ -69,6 +68,7 @@ def get_applications(device_id=""):
 
 @app.post('/api/logs')
 def get_logs():
+    filters = {}
     totals = {}
     logs = {}
     meta = {}
@@ -103,17 +103,28 @@ def get_logs():
     meta['running'] = is_running(device, app_id)
 
     for log in request.json['logs']:
+        search_text = request.json['queryData']['search'].get(log)
+        search_filter = request.json['queryData']['filters'].get(log)
+
         log_data = []
+        filter_values = []
+
+        cur = db.cursor()
 
         if log == 'crypto':
-            search_text = request.json['queryData']['search'].get(log)
             params = []
 
-            base_query_string = "select * from log_crypto "
+            base_query_string = "select * from log_crypto where 1 = 1 "
 
             if search_text:
-                base_query_string += " where params like ? "
+                base_query_string += " and params like ? "
                 params.append('%' + search_text + '%')
+
+            if search_filter:
+                search_filter = list(map(int, search_filter))
+                base_query_string += f" and method not in ( select method from log_crypto where id in ({','.join(['?']*len(search_filter))}))"
+                for f in search_filter:
+                    params.append(f)
 
             base_query_string += " order by id desc limit 100;"
 
@@ -124,6 +135,14 @@ def get_logs():
                     'timestamp': row['timestamp'],
                     'method': row['method'],
                     'params': row['params']
+                })
+
+            cur.execute("select min(id) as id, method from log_crypto group by method")
+            for row in cur:
+                filter_values.append({
+                    'value': row['id'],
+                    'text': row['method'],
+                    'enabled': False if search_filter and row['id'] in search_filter else True
                 })
         elif log == 'fs':
             search_text = request.json['queryData']['search'].get(log)
@@ -149,12 +168,18 @@ def get_logs():
             search_text = request.json['queryData']['search'].get(log)
             params = []
 
-            base_query_string = "select * from log_hash "
+            base_query_string = "select * from log_hash where 1 = 1 "
 
             if search_text:
-                base_query_string += " where input like ? or output like ?"
+                base_query_string += " and input like ? or output like ?"
                 params.append('%' + search_text + '%')
                 params.append('%' + search_text + '%')
+
+            if search_filter:
+                search_filter = list(map(int, search_filter))
+                base_query_string += f" and algo not in ( select algo from log_hash where id in ({','.join(['?']*len(search_filter))}))"
+                for f in search_filter:
+                    params.append(f)
 
             base_query_string += " order by id desc limit 100;"
 
@@ -166,6 +191,14 @@ def get_logs():
                     'timestamp': row['timestamp'],
                     'input': row['input'],
                     'output': row['output']
+                })
+
+            cur.execute("select min(id) as id, algo from log_hash group by algo")
+            for row in cur:
+                filter_values.append({
+                    'value': row['id'],
+                    'text': row['algo'],
+                    'enabled': False if search_filter and row['id'] in search_filter else True
                 })
         elif log == 'http':
             search_text = request.json['queryData']['search'].get(log)
@@ -215,16 +248,21 @@ def get_logs():
             search_text = request.json['queryData']['search'].get(log)
             params = []
 
-            base_query_string = "select * from log_sqlite "
+            base_query_string = "select * from log_sqlite where 1 = 1 "
 
             if search_text:
-                base_query_string += " where value like ? "
+                base_query_string += " and value like ? "
                 params.append('%' + search_text + '%')
+
+            if search_filter:
+                search_filter = list(map(int, search_filter))
+                base_query_string += f" and method not in ( select method from log_sqlite where id in ({','.join(['?']*len(search_filter))}))"
+                for f in search_filter:
+                    params.append(f)
 
             base_query_string += " order by id desc limit 100;"
 
             cur.execute(base_query_string, tuple(params))
-
             for row in cur:
                 log_data.append({
                     'id': row['id'],
@@ -233,14 +271,23 @@ def get_logs():
                     'value': row['value']
                 })
 
+            cur.execute("select min(id) as id, method from log_sqlite group by method")
+            for row in cur:
+                filter_values.append({
+                    'value': row['id'],
+                    'text': row['method'],
+                    'enabled': False if search_filter and row['id'] in search_filter else True
+                })
+
         logs[log] = log_data
+        filters[log] = filter_values
 
         if type(log_data) == list and len(log_data) > 0:
             totals[log] = log_data[0]['id']
         else:
             totals[log] = 0
 
-    return dict(data={"logs": logs, "totals": totals, "meta": meta}, success=True, message="")
+    return dict(data={"filters": filters,  "logs": logs, "totals": totals, "meta": meta}, success=True, message="")
 
 @app.post('/api/action')
 def app_action():
@@ -301,6 +348,7 @@ def enable_cors():
     response.headers['Access-Control-Allow-Headers'] = 'Authorization, Origin, Accept, Content-Type, X-Requested-With'
 
 def create_db():
+    cur = db.cursor()
     cur.executescript("""
         create table log_crypto (
             id INTEGER PRIMARY KEY,
@@ -371,13 +419,12 @@ def get_icon(app_params):
     return None
 
 def reset_db():
-    global db, cur
+    global db
 
     db.close()
 
     db = sqlite3.connect(":memory:", check_same_thread=False)
     db.row_factory = sqlite3.Row
-    cur = db.cursor()
 
     create_db()
 
@@ -440,7 +487,7 @@ def on_message(message, data):
     }
 
     if message['type'] == 'send':
-        log_func[message['payload']['log']](cur, message['payload'])
+        log_func[message['payload']['log']](db.cursor(), message['payload'])
     else:
         print(message)
 

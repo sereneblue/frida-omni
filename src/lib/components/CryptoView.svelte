@@ -1,5 +1,4 @@
 <script lang="ts">
-	import OmniSearch from "./OmniSearch.svelte";
 	import OmniTable from "./OmniTable.svelte";
 	import { createEventDispatcher } from 'svelte';
 	import { formatDistance } from 'date-fns';
@@ -7,6 +6,7 @@
 	const dispatch = createEventDispatcher();
 
 	export let data = [];
+	export let filters = [];
 	export let query = "";
 
 	const headers = ["Time", "Method", "Params"];
@@ -28,6 +28,7 @@
 
 <div>
 	<OmniTable {headers} {data} {render} 
-		on:search={e => dispatch('search', { type: 'crypto', value: e.detail })}	
-		search={query} hasSearch />
+		on:filter={e => dispatch('filter', { type: 'crypto', id: e.detail.id, checked: e.detail.checked })}
+		on:search={e => dispatch('search', { type: 'crypto', value: e.detail })}
+		{filters} search={query} hasSearch />
 </div>
