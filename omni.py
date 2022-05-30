@@ -492,5 +492,5 @@ def on_message(message, data):
         print(message)
 
 create_db()
-print('Starting frida-omni on localhost:8085')
+print('Starting frida-omni v0.1.0 on localhost:8085')
 run(app, host='localhost', port=8085, quiet=True)
