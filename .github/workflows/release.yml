@@ -1,0 +1,47 @@
+name: Build release
+
+on:
+  push:
+    tags:
+      - v**
+
+jobs:
+  build:
+    name: Create release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Install NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Build release
+        run: |
+          npm install
+          npm run build-release
+      - name: Get tagged version
+        id: frida-omni
+        run: |
+          echo ::set-output name=VERSION::$(git describe --tags)
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ steps.frida-omni.outputs.VERSION }}
+          release_name: frida-omni ${{ steps.frida-omni.outputs.VERSION }}
+          draft: false
+          prerelease: false
+      - name: Upload release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./frida-omni.zip
+          asset_name: frida-omni_${{ steps.frida-omni.outputs.VERSION }}.zip
+          asset_content_type: application/zip
