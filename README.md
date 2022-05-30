@@ -1,5 +1,8 @@
 # frida-omni
 
+![frida-omni version](https://img.shields.io/badge/version-0.1.0-teal.svg)
+![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+
 A minimal web app to analyze Android applications with Frida.
 
 ![image](https://user-images.githubusercontent.com/14242625/171037438-d306ec5d-f436-405b-8daf-512a0e670cab.png)
