@@ -1,8 +1,8 @@
 import type { ResponseData } from "./types";
 
 class Omni {
-	static base_url: string = "http://localhost:8080";
-	base_url: string = "http://localhost:8080";
+	static base_url: string = "http://" + window.location.host;
+	base_url: string = "http://" + window.location.host;
 	logs: object;
 
 	constructor() {
@@ -74,7 +74,7 @@ class Omni {
 	    downloadLink.href = `data:application/x-sqlite3;base64,${content}`;
 	    downloadLink.target = '_self';
 	    downloadLink.download = `omni_${appId}_${new Date().getTime()}.db`;
-	    downloadLink.click(); 
+	    downloadLink.click();
 	}
 }
 

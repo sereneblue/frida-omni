@@ -315,6 +315,7 @@ def app_action():
         SESSION = device.attach(pid)
         create_scripts()
         device.resume(pid)
+        sleep(1)
         load_scripts()
 
         CURRENT_DEVICE = device_id
@@ -445,7 +446,6 @@ def create_scripts():
         with open(script, 'r') as script_file: 
             SCRIPTS[script_name] = SESSION.create_script(script_file.read())
             SCRIPTS[script_name].on('message', on_message)
-            sleep(.5)
 
 def stop_app(device, app_id):
     apps = device.enumerate_applications()
@@ -492,4 +492,5 @@ def on_message(message, data):
         print(message)
 
 create_db()
-run(app, host='localhost', port=8080, debug=False)
+print('Starting frida-omni on localhost:8085')
+run(app, host='localhost', port=8085, quiet=True)
